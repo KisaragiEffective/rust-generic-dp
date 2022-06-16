@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+#![warn(clippy::pedantic, clippy::nursery)]
 mod dp;
 mod collecting;
 mod cache;
@@ -22,17 +24,13 @@ fn main() {
     // let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
     let f = |k: i32| {
         Rc::new(
-            if k == 0 {
+            if k == 0 || k == 1 {
                 topdown::State::Base {
                     base_result: 1
                 }
-            } else if k == 1 {
-                topdown::State::Base {
-                    base_result: 1
-                }
-            } else {
+            }  else {
                 topdown::State::Intermediate {
-                    composer: |a: NonEmpty<i32>| a.iter().fold(0, |a, b| a + b),
+                    composer: |a: NonEmpty<i32>| a.iter().sum(),
                     dependent: ne_vec![k - 1, k - 2],
                 }
             }

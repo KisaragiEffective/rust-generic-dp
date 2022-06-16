@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 pub trait CachePolicy<K, V> {
     fn get(&self, k: &K) -> Option<&V>;
-    fn set(&mut self, k: K, v: V) -> ();
+    fn set(&mut self, k: K, v: V);
 }
 
 pub struct CacheAll<K, V> {
@@ -22,7 +22,7 @@ impl<K: Eq + Hash, V> CachePolicy<K, V> for CacheAll<K, V> {
         self.inner.get(k)
     }
 
-    fn set(&mut self, k: K, v: V) -> () {
+    fn set(&mut self, k: K, v: V) {
         self.inner.insert(k, v);
     }
 }
@@ -34,6 +34,6 @@ impl<K, V> CachePolicy<K, V> for NoCache {
         None
     }
 
-    fn set(&mut self, k: K, v: V) -> () {
+    fn set(&mut self, k: K, v: V) {
     }
 }

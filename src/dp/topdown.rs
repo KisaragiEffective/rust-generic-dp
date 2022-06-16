@@ -85,11 +85,9 @@ impl<
                 let len = usize::from(len);
                 let mut temp: Vec<MaybeUninit<R>> = Vec::with_capacity(len);
                 temp.resize_with(len, || MaybeUninit::uninit());
-                let mut i = 0;
-                for x in dependent {
+                for (i, x) in dependent.into_iter().enumerate() {
                     let lp = self.dp(*x);
                     temp[i] = MaybeUninit::new(lp);
-                    i += 1;
                 }
                 composer.reduce((temp.into_iter().map(|a| unsafe { a.assume_init() }).collect::<Vec<_>>()).try_into().unwrap())
             }
