@@ -62,13 +62,13 @@ impl<
             State::Intermediate { composer, dependent } => {
                 let len = dependent.len();
                 let len = usize::from(len);
-                let mut temp: Vec<MaybeUninit<R>> = Vec::with_capacity(len);
-                temp.resize_with(len, || MaybeUninit::uninit());
-                for (i, x) in dependent.into_iter().enumerate() {
-                    let lp = self.dp(*x);
-                    temp[i] = MaybeUninit::new(lp);
-                }
-                composer.reduce((temp.into_iter().map(|a| unsafe { a.assume_init() }).collect::<Vec<_>>()).try_into().unwrap())
+                let kk = crate::wrap_unsafe::maybe_garbage_vec::tap_garbage(len, |temp| {
+                    for (i, x) in dependent.into_iter().enumerate() {
+                        let lp = self.dp(*x);
+                        temp[i] = MaybeUninit::new(lp);
+                    }
+                });
+                composer.reduce(kk.try_into().unwrap())
             }
             State::Base { base_result } => {
                 base_result.clone()

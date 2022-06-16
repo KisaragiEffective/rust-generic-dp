@@ -4,6 +4,7 @@ mod dp;
 mod collecting;
 mod cache;
 mod perf;
+mod wrap_unsafe;
 
 use std::borrow::Borrow;
 use std::fmt::{Debug, Display};

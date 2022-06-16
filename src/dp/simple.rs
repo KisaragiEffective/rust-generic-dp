@@ -29,16 +29,13 @@ impl<
         match solve_result_ref {
             State::Intermediate { dependent } => {
                 // let dependent = dbg!(dependent);
-                let smaller_indexes = &dependent;
-                let len = smaller_indexes.len().into();
-                let mut buffer: Vec<MaybeUninit<R>> = Vec::with_capacity(len);
-                buffer.resize_with(len, || MaybeUninit::uninit());
-                for (i, smaller_index) in smaller_indexes.into_iter().enumerate() {
-                    let lp = self.dp(*smaller_index);
-                    buffer[i] = MaybeUninit::new(lp);
-                }
-                let collected_values = buffer.into_iter().map(|a| unsafe { a.assume_init() }).collect::<Vec<_>>();
-                let (_, collected_values) = (initial_index, collected_values);
+                let len = dependent.len().into();
+                let collected_values = crate::wrap_unsafe::maybe_garbage_vec::tap_garbage(len, |temp| {
+                    for (i, x) in dependent.iter().enumerate() {
+                        let lp = self.dp(*x);
+                        temp[i] = MaybeUninit::new(lp);
+                    }
+                });
                 let reducer = ReduceByMagma::new(self.compose_by);
                 use crate::collecting::Reducer;
                 reducer.reduce(collected_values.try_into().unwrap())
