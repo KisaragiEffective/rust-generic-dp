@@ -30,7 +30,7 @@ fn main() {
                 }
             }
         },
-        |a: i32, b: i32| a + b,
+        crate::collecting::Sum::new(),
     );
 
     let x = owo.dp(5);
