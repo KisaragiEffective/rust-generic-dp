@@ -89,8 +89,7 @@ fn check<'a, F: 'a + FnOnce() -> T, T>(f: F) -> T {
     t
 }
 fn run_dp<'a, Index, Output: 'a + Display>(index: Index, dp: &'a (impl DP<'a, Index, Output> + 'a)) {
-    let p = dp.dp(index);
-    println!("{}", check::<'a, _, _>(|| p));
+    println!("{}", check(|| dp.dp(index)));
 }
 
 struct DPCopied<'r, 'a, Index, Answer: Copy, D>(D, PhantomData<(&'r (), &'a (), Index, Answer)>);
