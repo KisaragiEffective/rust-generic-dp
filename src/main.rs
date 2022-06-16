@@ -4,6 +4,8 @@ mod collecting;
 mod cache;
 
 use std::fmt::Display;
+use std::fs::File;
+use std::io::Write;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ops::{Deref, Index};
@@ -15,9 +17,10 @@ use crate::cache::{CacheAll, NoCache};
 use crate::dp_traits::DPOwned;
 
 fn main() {
+    let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
     run_dp(
         30,
-        TopDownDP::new(
+        &TopDownDP::new(
             |k: i32| {
                 if k == 0 {
                     ProblemState::Base {
@@ -40,7 +43,7 @@ fn main() {
     );
     run_dp(
         30,
-        TopDownDP::new(
+        &TopDownDP::new(
             |k: i32| {
                 if k == 0 {
                     ProblemState::Base {
@@ -61,9 +64,23 @@ fn main() {
             CacheAll::new(),
         )
     );
+    match guard.report().build() {
+        Ok(report) => {
+            use pprof::protos::Message;
+            let mut file = File::create("profile.pb").unwrap();
+            let profile = report.pprof().unwrap();
+
+            let mut content = Vec::new();
+            profile.encode(&mut content).unwrap();
+            file.write_all(&content).unwrap();
+
+            // println!("report: {:?}", &report);
+        }
+        Err(_) => {}
+    };
 }
 
-fn check<F: FnOnce() -> T, T>(f: F) -> T {
+fn check<'a, F: 'a + FnOnce() -> T, T>(f: F) -> T {
     let start = Instant::now();
     let t = f();
     let duration = start.elapsed();
@@ -71,8 +88,9 @@ fn check<F: FnOnce() -> T, T>(f: F) -> T {
     println!("Time elapsed in expensive_function() is: {:?}", duration);
     t
 }
-fn run_dp<Index, Output: Display>(index: Index, dp: impl DP<'_, Index, Output>) {
-    println!("{}", check(|| dp.dp(index)));
+fn run_dp<'a, Index, Output: 'a + Display>(index: Index, dp: &'a (impl DP<'a, Index, Output> + 'a)) {
+    let p = dp.dp(index);
+    println!("{}", check::<'a, _, _>(|| p));
 }
 
 struct DPCopied<'r, 'a, Index, Answer: Copy, D>(D, PhantomData<(&'r (), &'a (), Index, Answer)>);
