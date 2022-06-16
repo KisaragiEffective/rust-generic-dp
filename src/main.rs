@@ -2,6 +2,7 @@ mod dp;
 mod dp_traits;
 mod collecting;
 mod cache;
+mod perf;
 
 use std::fmt::Display;
 use std::fs::File;
@@ -11,10 +12,12 @@ use std::mem::MaybeUninit;
 use std::ops::{Deref, Index};
 use std::time::Instant;
 use non_empty_vec::NonEmpty;
-use dp_traits::DP;
-use dp::TopDownDP;
+use crate::dp_traits::DP;
+use crate::dp::TopDownDP;
 use crate::cache::{CacheAll, NoCache};
 use crate::dp_traits::DPOwned;
+use crate::perf::run_print_time;
+use crate::collecting::Sum;
 
 fn main() {
     let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
@@ -80,16 +83,8 @@ fn main() {
     };
 }
 
-fn check<'a, F: 'a + FnOnce() -> T, T>(f: F) -> T {
-    let start = Instant::now();
-    let t = f();
-    let duration = start.elapsed();
-
-    println!("Time elapsed in expensive_function() is: {:?}", duration);
-    t
-}
 fn run_dp<'a, Index, Output: 'a + Display>(index: Index, dp: &'a (impl DP<'a, Index, Output> + 'a)) {
-    println!("{}", check(|| dp.dp(index)));
+    println!("{}", run_print_time("the dp function", || dp.dp(index)));
 }
 
 struct DPCopied<'r, 'a, Index, Answer: Copy, D>(D, PhantomData<(&'r (), &'a (), Index, Answer)>);
