@@ -3,41 +3,76 @@ mod dp_traits;
 mod collecting;
 mod cache;
 
+use std::fmt::Display;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ops::{Deref, Index};
+use std::time::Instant;
 use non_empty_vec::NonEmpty;
 use dp_traits::DP;
 use dp::TopDownDP;
-use crate::cache::NoCache;
+use crate::cache::{CacheAll, NoCache};
 use crate::dp_traits::DPOwned;
 
 fn main() {
-    println!("Hello, world!");
-    // let x = Fib.solve(5, (), &Box::new(|a, b| a + b));
-    let owo = TopDownDP::new(
-        |k: i32| {
-            if k == 0 {
-                ProblemState::Base {
-                    base_result: 1
+    run_dp(
+        30,
+        TopDownDP::new(
+            |k: i32| {
+                if k == 0 {
+                    ProblemState::Base {
+                        base_result: 1
+                    }
+                } else if k == 1 {
+                    ProblemState::Base {
+                        base_result: 1
+                    }
+                } else {
+                    ProblemState::Intermediate {
+                        composer: |a| a[0].iter().fold(0, |a, b| a + b),
+                        dependent: NonEmpty::new(vec![k - 1, k - 2])
+                    }
                 }
-            } else if k == 1 {
-                ProblemState::Base {
-                    base_result: 1
-                }
-            } else {
-                ProblemState::Intermediate {
-                    composer: |a| a[0].iter().fold(0, |a, b| a + b),
-                    dependent: NonEmpty::new(vec![k - 1, k - 2])
-                }
-            }
-        },
-        crate::collecting::Sum::new(),
-        NoCache,
+            },
+            crate::collecting::Sum::new(),
+            NoCache,
+        )
     );
+    run_dp(
+        30,
+        TopDownDP::new(
+            |k: i32| {
+                if k == 0 {
+                    ProblemState::Base {
+                        base_result: 1
+                    }
+                } else if k == 1 {
+                    ProblemState::Base {
+                        base_result: 1
+                    }
+                } else {
+                    ProblemState::Intermediate {
+                        composer: |a| a[0].iter().fold(0, |a, b| a + b),
+                        dependent: NonEmpty::new(vec![k - 1, k - 2])
+                    }
+                }
+            },
+            crate::collecting::Sum::new(),
+            CacheAll::new(),
+        )
+    );
+}
 
-    let x = owo.dp(5);
-    println!("{x}")
+fn check<F: FnOnce() -> T, T>(f: F) -> T {
+    let start = Instant::now();
+    let t = f();
+    let duration = start.elapsed();
+
+    println!("Time elapsed in expensive_function() is: {:?}", duration);
+    t
+}
+fn run_dp<Index, Output: Display>(index: Index, dp: impl DP<'_, Index, Output>) {
+    println!("{}", check(|| dp.dp(index)));
 }
 
 struct DPCopied<'r, 'a, Index, Answer: Copy, D>(D, PhantomData<(&'r (), &'a (), Index, Answer)>);

@@ -10,6 +10,13 @@ pub struct CacheAll<K, V> {
     inner: HashMap<K, V>
 }
 
+impl<K, V> CacheAll<K, V> {
+    pub fn new() -> Self {
+        Self {
+            inner: HashMap::new()
+        }
+    }
+}
 impl<K: Eq + Hash, V> CachePolicy<K, V> for CacheAll<K, V> {
     fn get(&self, k: &K) -> Option<&V> {
         self.inner.get(k)
