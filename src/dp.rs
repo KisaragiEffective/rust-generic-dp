@@ -1,5 +1,6 @@
 use non_empty_vec::NonEmpty;
 use std::marker::PhantomData;
+use crate::cache::CachePolicy;
 use crate::collecting::Magma;
 use crate::ProblemState;
 use crate::dp_traits::{DP, DPOwned};
@@ -11,9 +12,11 @@ pub struct TopDownDP<
     PartialProblemAnswerCombiner,
     Solver,
     Combiner,
+    Cache,
 > {
     solver: Solver,
     combiner: Combiner,
+    cache_policy: Cache,
     __phantoms: PhantomData<(I, ProbAnswer, SRI, PartialProblemAnswerCombiner)>
 }
 
@@ -21,13 +24,17 @@ impl<
     I,
     ProbAnswer,
     SRI,
-    PartialProblemAnswerCombiner: Fn(NonEmpty<Vec<ProbAnswer>>) -> ProbAnswer,
-    Solver: Fn(SRI) -> ProblemState<ProbAnswer, PartialProblemAnswerCombiner, I>,
-    Combiner: Magma<ProbAnswer>
-> TopDownDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver, Combiner> {
-    pub(crate) fn new(solver: Solver, combiner: Combiner) -> Self {
+    PartialProblemAnswerCombiner,
+    Solver,
+    Combiner,
+    Cache,
+> TopDownDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver, Combiner, Cache> {
+    pub(crate) fn new(solver: Solver, combiner: Combiner, cache_policy: Cache) -> Self {
         Self {
-            solver, combiner, __phantoms: PhantomData
+            solver,
+            combiner,
+            cache_policy,
+            __phantoms: PhantomData,
         }
     }
 }
@@ -66,14 +73,18 @@ impl<
 impl<
     'dp,
     I: Copy,
-    R,
-    PartialProblemAnswerCombiner: Fn(NonEmpty<Vec<R>>) -> R,
+    R: Clone,
+    PartialProblemAnswerCombiner: Clone + Fn(NonEmpty<Vec<R>>) -> R,
     Solver: Fn(I) -> ProblemState<R, PartialProblemAnswerCombiner, I>,
-    BinaryCombiner: Magma<R>
-> DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, BinaryCombiner> {
+    BinaryCombiner: Magma<R>,
+    Cache: CachePolicy<I, ProblemState<R, PartialProblemAnswerCombiner, I>>,
+> DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, BinaryCombiner, Cache> {
     fn dp(&'dp self, initial_index: I) -> R {
-        let solve_result = (self.solver)(initial_index);
-        let mut result = None;
+        let solve_result = match self.cache_policy.get(&initial_index) {
+            None => (self.solver)(initial_index).clone(),
+            Some(a) => a.clone(),
+        };
+
         match solve_result {
             ProblemState::Intermediate { composer, dependent } => {
                 let mut temp = vec![];
@@ -81,13 +92,12 @@ impl<
                     let lp = self.dp(*x);
                     temp.push(lp);
                 }
-                result = Some(composer(NonEmpty::new(temp)));
+                composer(NonEmpty::new(temp))
             }
             ProblemState::Base { base_result } => {
-                result = Some(base_result);
+                base_result.clone()
             }
         }
 
-        result.unwrap()
     }
 }

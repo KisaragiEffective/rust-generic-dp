@@ -1,6 +1,7 @@
 mod dp;
 mod dp_traits;
 mod collecting;
+mod cache;
 
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
@@ -8,6 +9,7 @@ use std::ops::{Deref, Index};
 use non_empty_vec::NonEmpty;
 use dp_traits::DP;
 use dp::TopDownDP;
+use crate::cache::NoCache;
 use crate::dp_traits::DPOwned;
 
 fn main() {
@@ -31,6 +33,7 @@ fn main() {
             }
         },
         crate::collecting::Sum::new(),
+        NoCache,
     );
 
     let x = owo.dp(5);
@@ -45,6 +48,7 @@ impl<'se, 'a, Index, Answer: 'se + Copy, D: 'se + DP<'se, Index, &'se Answer>> D
     }
 }
 
+#[derive(Clone)]
 pub enum ProblemState<A, F: Fn(NonEmpty<Vec<A>>) -> A, I> {
     Intermediate {
         composer: F,
