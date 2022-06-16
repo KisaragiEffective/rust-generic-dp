@@ -117,19 +117,3 @@ trait CollectingPolicy {
 
     fn empty_element() -> Self::FoldType;
 }
-
-/*
-struct Max<T: Ord>;
-struct MaxOption<T: PartialOrd>;
-struct Min<T: Ord>;
-struct MinOption<T: PartialOrd>;
-*/
-
-#[derive(Default)]
-struct Sum<T: std::ops::Add>(PhantomData<T>);
-/*
-struct Product<T: std::ops::Mul>;
-struct BitAnd<T: std::ops::BitAnd>;
-struct BirOr<T: std::ops::BitOr>;
-struct BitXor<T: std::ops::BitXor>;
-*/

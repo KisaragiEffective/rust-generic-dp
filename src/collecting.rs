@@ -30,3 +30,17 @@ impl<T: Add<Output=T>> Magma<T> for Sum<T> {
 }
 
 
+
+/*
+struct Max<T: Ord>;
+struct MaxOption<T: PartialOrd>;
+struct Min<T: Ord>;
+struct MinOption<T: PartialOrd>;
+*/
+
+/*
+struct Product<T: std::ops::Mul>;
+struct BitAnd<T: std::ops::BitAnd>;
+struct BirOr<T: std::ops::BitOr>;
+struct BitXor<T: std::ops::BitXor>;
+*/
