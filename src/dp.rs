@@ -1,5 +1,6 @@
 use non_empty_vec::NonEmpty;
 use std::marker::PhantomData;
+use std::mem::MaybeUninit;
 use crate::cache::CachePolicy;
 use crate::collecting::Magma;
 use crate::ProblemState;
@@ -96,17 +97,19 @@ impl<
             Some(a) => a.clone(),
         };
 
-        match solve_result {
+        match solve_result.as_ref() {
             ProblemState::Intermediate { composer, dependent } => {
                 let inner = &dependent[0];
                 let len = inner.len();
-                // TODO: this can be uninited, later we overwrite anyway.
-                let mut temp = Vec::with_capacity(len);
+                let mut temp: Vec<MaybeUninit<R>> = Vec::with_capacity(len);
+                temp.resize_with(len, || MaybeUninit::uninit());
+                let mut i = 0;
                 for x in inner {
                     let lp = self.dp(*x);
-                    temp.push(lp);
+                    temp[i] = MaybeUninit::new(lp);
+                    i += 1;
                 }
-                composer(NonEmpty::new(temp))
+                composer(NonEmpty::new(temp.into_iter().map(|a| unsafe { a.assume_init() }).collect()))
             }
             ProblemState::Base { base_result } => {
                 base_result.clone()
