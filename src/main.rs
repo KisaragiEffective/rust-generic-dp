@@ -5,70 +5,48 @@ mod cache;
 mod perf;
 
 use std::fmt::Display;
-use std::fs::File;
-use std::io::Write;
 use std::marker::PhantomData;
-use std::mem::MaybeUninit;
-use std::ops::{Deref, Index};
 use std::rc::Rc;
-use std::time::Instant;
 use non_empty_vec::NonEmpty;
 use crate::dp_traits::DP;
 use crate::dp::TopDownDP;
 use crate::cache::{CacheAll, NoCache};
+use crate::collecting::Magma;
 use crate::dp_traits::DPOwned;
 use crate::perf::run_print_time;
-use crate::collecting::Sum;
 
 fn main() {
     // let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
+    let f = |k: i32| {
+        Rc::new(
+            if k == 0 {
+                ProblemState::Base {
+                    base_result: 1
+                }
+            } else if k == 1 {
+                ProblemState::Base {
+                    base_result: 1
+                }
+            } else {
+                ProblemState::Intermediate {
+                    composer: |a| a[0].iter().fold(0, |a, b| a + b),
+                    dependent: NonEmpty::new(vec![k - 1, k - 2])
+                }
+            }
+        )
+    };
+
     run_dp(
         30,
         &TopDownDP::new(
-            |k: i32| {
-                Rc::new(
-                    if k == 0 {
-                        ProblemState::Base {
-                            base_result: 1
-                        }
-                    } else if k == 1 {
-                        ProblemState::Base {
-                            base_result: 1
-                        }
-                    } else {
-                        ProblemState::Intermediate {
-                            composer: |a| a[0].iter().fold(0, |a, b| a + b),
-                            dependent: NonEmpty::new(vec![k - 1, k - 2])
-                        }
-                    }
-                )
-            },
-            crate::collecting::Sum::new(),
+            f,
             NoCache,
         )
     );
     run_dp(
         30,
         &TopDownDP::new(
-            |k: i32| {
-                Rc::new(
-                    if k == 0 {
-                        ProblemState::Base {
-                            base_result: 1
-                        }
-                    } else if k == 1 {
-                        ProblemState::Base {
-                            base_result: 1
-                        }
-                    } else {
-                        ProblemState::Intermediate {
-                            composer: |a| a[0].iter().fold(0, |a, b| a + b),
-                            dependent: NonEmpty::new(vec![k - 1, k - 2])
-                        }
-                    }
-                )
-            },
-            crate::collecting::Sum::new(),
+            f,
             CacheAll::new(),
         )
     );

@@ -17,11 +17,9 @@ pub struct TopDownDP<
     SRI,
     PartialProblemAnswerCombiner,
     Solver,
-    Combiner,
     Cache,
 > {
     solver: Solver,
-    combiner: Combiner,
     // earn internal-mutability
     cache_policy: RefCell<Cache>,
     __phantoms: PhantomData<(I, ProbAnswer, SRI, PartialProblemAnswerCombiner)>
@@ -33,13 +31,11 @@ impl<
     SRI,
     PartialProblemAnswerCombiner,
     Solver,
-    Combiner,
     Cache,
-> TopDownDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver, Combiner, Cache> {
-    pub(crate) fn new(solver: Solver, combiner: Combiner, cache_policy: Cache) -> Self {
+> TopDownDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver, Cache> {
+    pub(crate) fn new(solver: Solver, cache_policy: Cache) -> Self {
         Self {
             solver,
-            combiner,
             cache_policy: RefCell::new(cache_policy),
             __phantoms: PhantomData,
         }
@@ -93,9 +89,8 @@ impl<
     R: Clone,
     PartialProblemAnswerCombiner: Clone + Fn(NonEmpty<Vec<R>>) -> R,
     Solver: Fn(I) -> Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>,
-    BinaryCombiner: Magma<R>,
     Cache: CachePolicy<I, Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>>,
-> DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, BinaryCombiner, Cache> {
+> DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, Cache> {
     fn dp(&'dp self, initial_index: I) -> R {
         use crate::perf::run_print_time;
         let xyy = {
