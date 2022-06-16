@@ -20,7 +20,7 @@ use crate::perf::run_print_time;
 use crate::collecting::Sum;
 
 fn main() {
-    let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
+    // let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
     run_dp(
         30,
         &TopDownDP::new(
@@ -67,6 +67,7 @@ fn main() {
             CacheAll::new(),
         )
     );
+    /*
     match guard.report().build() {
         Ok(report) => {
             use pprof::protos::Message;
@@ -81,6 +82,8 @@ fn main() {
         }
         Err(_) => {}
     };
+
+     */
 }
 
 fn run_dp<'a, Index, Output: 'a + Display>(index: Index, dp: &'a (impl DP<'a, Index, Output> + 'a)) {
