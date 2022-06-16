@@ -12,10 +12,10 @@ use std::ops::Deref;
 use std::rc::Rc;
 use crate::cache::CachePolicy;
 use crate::collecting::Magma;
-use crate::{ProblemState, Reducer};
+use crate::dp::simple::State;
 use crate::dp::simple::PartialTopDownDP;
 
-fn simple_dp<'dp, I: Copy, R: Copy, M: Copy + Magma<R>, Solver: Fn(I) -> simple::State<I, R>>(
+pub(crate) fn simple_dp<'dp, I: Copy, R: Copy, M: Copy + Magma<R>, Solver: Fn(I) -> State<I, R>>(
     solver: Solver,
     compose_by: M,
 ) -> PartialTopDownDP<'dp, I, R, M, Solver> {

@@ -2,8 +2,9 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use non_empty_vec::NonEmpty;
-use crate::{DP, Magma};
 use crate::dp::traits::DP;
+use crate::collecting::Magma;
+use crate::collecting::ReduceByMagma;
 
 pub(crate) struct PartialTopDownDP<'dp, I, R, M: Magma<R>, Solver: Fn(I) -> State<I, R>> {
     pub(super) solver: Solver,

@@ -1,8 +1,11 @@
 use std::cell::RefCell;
 use std::marker::PhantomData;
+use std::mem::MaybeUninit;
 use std::rc::Rc;
+use non_empty_vec::NonEmpty;
 use crate::cache::CachePolicy;
-use crate::{ProblemState, Reducer};
+use crate::collecting::Reducer;
+use crate::dp::traits::DP;
 
 pub struct TopDownDP<
     I,
@@ -16,6 +19,17 @@ pub struct TopDownDP<
     // earn internal-mutability
     cache_policy: RefCell<Cache>,
     __phantoms: PhantomData<(I, ProbAnswer, SRI, PartialProblemAnswerCombiner)>
+}
+
+#[derive(Clone)]
+pub enum State<A, F: Reducer<A>, I> {
+    Intermediate {
+        composer: F,
+        dependent: NonEmpty<I>
+    },
+    Base {
+        base_result: A,
+    }
 }
 
 impl<
@@ -40,8 +54,8 @@ impl<
     I: Copy,
     R: Clone,
     PartialProblemAnswerCombiner: Clone + Reducer<R>,
-    Solver: Fn(I) -> Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>,
-    Cache: CachePolicy<I, Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>>,
+    Solver: Fn(I) -> Rc<State<R, PartialProblemAnswerCombiner, I>>,
+    Cache: CachePolicy<I, Rc<State<R, PartialProblemAnswerCombiner, I>>>,
 > DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, Cache> {
     fn dp(&'dp self, initial_index: I) -> R {
         use crate::perf::run_print_time;
@@ -64,7 +78,7 @@ impl<
         let solve_result_ref = solve_result.as_ref();
 
         match solve_result_ref {
-            ProblemState::Intermediate { composer, dependent } => {
+            State::Intermediate { composer, dependent } => {
                 let len = dependent.len();
                 let len = usize::from(len);
                 let mut temp: Vec<MaybeUninit<R>> = Vec::with_capacity(len);
@@ -77,7 +91,7 @@ impl<
                 }
                 composer.reduce((temp.into_iter().map(|a| unsafe { a.assume_init() }).collect::<Vec<_>>()).try_into().unwrap())
             }
-            ProblemState::Base { base_result } => {
+            State::Base { base_result } => {
                 base_result.clone()
             }
         }

@@ -10,13 +10,12 @@ use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::rc::Rc;
 use non_empty_vec::{ne_vec, NonEmpty};
-use crate::dp_traits::DP;
-use crate::dp::TopDownDP;
 use crate::cache::{CacheAll, NoCache};
 use crate::collecting::{Magma, ReduceByMagma, Reducer, Sum};
+use crate::dp::simple::State;
+use crate::dp::topdown;
 use crate::dp::topdown::TopDownDP;
 use crate::dp::traits::{DP, DPOwned};
-use crate::dp_traits::DPOwned;
 use crate::perf::run_print_time;
 
 fn main() {
@@ -24,15 +23,15 @@ fn main() {
     let f = |k: i32| {
         Rc::new(
             if k == 0 {
-                ProblemState::Base {
+                topdown::State::Base {
                     base_result: 1
                 }
             } else if k == 1 {
-                ProblemState::Base {
+                topdown::State::Base {
                     base_result: 1
                 }
             } else {
-                ProblemState::Intermediate {
+                topdown::State::Intermediate {
                     composer: |a: NonEmpty<i32>| a.iter().fold(0, |a, b| a + b),
                     dependent: ne_vec![k - 1, k - 2],
                 }
@@ -56,18 +55,18 @@ fn main() {
     );
 
     {
-        let dp = simple_dp(
+        let dp = dp::simple_dp(
             |k: i32| {
                 if k == 0 {
-                    PartialProblemState::Base {
+                    State::Base {
                         base_result: 0
                     }
                 } else if k == 1 {
-                    PartialProblemState::Base {
+                    State::Base {
                         base_result: 1
                     }
                 } else {
-                    PartialProblemState::Intermediate {
+                    State::Intermediate {
                         dependent: ne_vec![k - 1, k - 2]
                     }
                 }
@@ -105,17 +104,6 @@ struct DPCopied<'r, 'a, Index, Answer: Copy, D>(D, PhantomData<(&'r (), &'a (), 
 impl<'se, 'a, Index, Answer: 'se + Copy, D: 'se + DP<'se, Index, &'se Answer>> DPOwned<'se, Index, Answer> for DPCopied<'se, 'a, Index, Answer, D> {
     fn dp_owned(&'se self, index: Index) -> Answer {
         *self.0.dp(index)
-    }
-}
-
-#[derive(Clone)]
-pub enum ProblemState<A, F: Reducer<A>, I> {
-    Intermediate {
-        composer: F,
-        dependent: NonEmpty<I>
-    },
-    Base {
-        base_result: A,
     }
 }
 
