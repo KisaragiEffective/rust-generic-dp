@@ -4,14 +4,17 @@ mod collecting;
 mod cache;
 mod perf;
 
-use std::fmt::Display;
+use std::borrow::Borrow;
+use std::fmt::{Debug, Display};
 use std::marker::PhantomData;
+use std::mem::MaybeUninit;
+use std::ops::Deref;
 use std::rc::Rc;
-use non_empty_vec::NonEmpty;
+use non_empty_vec::{ne_vec, NonEmpty};
 use crate::dp_traits::DP;
 use crate::dp::TopDownDP;
 use crate::cache::{CacheAll, NoCache};
-use crate::collecting::Magma;
+use crate::collecting::{Magma, ReduceByMagma, Reducer, Sum};
 use crate::dp_traits::DPOwned;
 use crate::perf::run_print_time;
 
@@ -29,8 +32,8 @@ fn main() {
                 }
             } else {
                 ProblemState::Intermediate {
-                    composer: |a| a[0].iter().fold(0, |a, b| a + b),
-                    dependent: NonEmpty::new(vec![k - 1, k - 2])
+                    composer: |a: NonEmpty<i32>| a.iter().fold(0, |a, b| a + b),
+                    dependent: ne_vec![k - 1, k - 2],
                 }
             }
         )
@@ -82,10 +85,10 @@ impl<'se, 'a, Index, Answer: 'se + Copy, D: 'se + DP<'se, Index, &'se Answer>> D
 }
 
 #[derive(Clone)]
-pub enum ProblemState<A, F: Fn(NonEmpty<Vec<A>>) -> A, I> {
+pub enum ProblemState<A, F: Reducer<A>, I> {
     Intermediate {
         composer: F,
-        dependent: NonEmpty<Vec<I>>
+        dependent: NonEmpty<I>
     },
     Base {
         base_result: A,

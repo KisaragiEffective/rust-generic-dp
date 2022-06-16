@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use std::ops::Add;
+use non_empty_vec::NonEmpty;
 
 pub trait Magma<A> {
     fn combine(&self, lhs: A, rhs: A) -> A;
@@ -15,6 +16,7 @@ pub trait Monoid<A>: Magma<A> {
     fn empty_element() -> A;
 }
 
+#[derive(Copy, Clone)]
 pub struct Sum<T>(PhantomData<T>);
 
 impl<T> Sum<T> {
@@ -29,7 +31,39 @@ impl<T: Add<Output=T>> Magma<T> for Sum<T> {
     }
 }
 
+pub trait Reducer<T> {
+    fn reduce(&self, reduce_source: NonEmpty<T>) -> T;
+}
 
+pub struct ReduceByMagma<T, M>(M, PhantomData<T>);
+
+impl<T, M: Clone> Clone for ReduceByMagma<T, M> {
+    fn clone(&self) -> Self {
+        Self::new(self.0.clone())
+    }
+}
+
+impl<T, M: Copy> Copy for ReduceByMagma<T, M> {}
+
+impl<T, M> ReduceByMagma<T, M> {
+    pub fn new(magma: M) -> Self {
+        Self(magma, PhantomData)
+    }
+}
+
+impl<T: Copy, M: Magma<T>> Reducer<T> for ReduceByMagma<T, M> {
+    fn reduce(&self, reduce_source: NonEmpty<T>) -> T {
+        // dont fold with the first element.
+        // SAFETY: we know the iterator is also non-empty
+        reduce_source.clone().into_iter().reduce(|a, b| self.0.combine(a, b)).unwrap()
+    }
+}
+
+impl<T: Clone, F: Copy + FnOnce(NonEmpty<T>) -> T> Reducer<T> for F {
+    fn reduce(&self, reduce_source: NonEmpty<T>) -> T {
+        (&self(reduce_source)).clone().clone()
+    }
+}
 
 /*
 struct Max<T: Ord>;

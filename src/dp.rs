@@ -8,7 +8,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use crate::cache::CachePolicy;
 use crate::collecting::Magma;
-use crate::ProblemState;
+use crate::{ProblemState, Reducer};
 use crate::dp_traits::{DP, DPOwned};
 
 pub struct TopDownDP<
@@ -75,7 +75,7 @@ impl<
 
 impl<
     R,
-    PartialProblemAnswerCombiner: Fn(NonEmpty<Vec<R>>) -> R,
+    PartialProblemAnswerCombiner: Reducer<R>,
     I
 > AsRef<ProblemState<R, PartialProblemAnswerCombiner, I>> for ProblemState<R, PartialProblemAnswerCombiner, I> {
     fn as_ref(&self) -> &ProblemState<R, PartialProblemAnswerCombiner, I> {
@@ -87,7 +87,7 @@ impl<
     'dp,
     I: Copy,
     R: Clone,
-    PartialProblemAnswerCombiner: Clone + Fn(NonEmpty<Vec<R>>) -> R,
+    PartialProblemAnswerCombiner: Clone + Reducer<R>,
     Solver: Fn(I) -> Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>,
     Cache: CachePolicy<I, Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>>,
 > DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, Cache> {
@@ -113,17 +113,17 @@ impl<
 
         match solve_result_ref {
             ProblemState::Intermediate { composer, dependent } => {
-                let inner = &dependent[0];
-                let len = inner.len();
+                let len = dependent.len();
+                let len = usize::from(len);
                 let mut temp: Vec<MaybeUninit<R>> = Vec::with_capacity(len);
                 temp.resize_with(len, || MaybeUninit::uninit());
                 let mut i = 0;
-                for x in inner {
+                for x in dependent {
                     let lp = self.dp(*x);
                     temp[i] = MaybeUninit::new(lp);
                     i += 1;
                 }
-                composer(NonEmpty::new(temp.into_iter().map(|a| unsafe { a.assume_init() }).collect()))
+                composer.reduce((temp.into_iter().map(|a| unsafe { a.assume_init() }).collect::<Vec<_>>()).try_into().unwrap())
             }
             ProblemState::Base { base_result } => {
                 base_result.clone()
