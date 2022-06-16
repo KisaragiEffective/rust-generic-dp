@@ -5,8 +5,9 @@ use non_empty_vec::NonEmpty;
 use crate::dp::traits::DP;
 use crate::collecting::Magma;
 use crate::collecting::ReduceByMagma;
+use crate::dp::get_state::GetState;
 
-pub struct PartialTopDownDP<'dp, I, R, M: Magma<R>, Solver: Fn(I) -> State<I, R>> {
+pub struct PartialTopDownDP<'dp, I, R, M: Magma<R>, Solver> {
     pub(super) solver: Solver,
     pub(super) compose_by: M,
     pub(super) __phantoms: PhantomData<(&'dp (), I, R)>,
@@ -18,12 +19,12 @@ impl<
     I: Copy + Debug,
     R: Copy + Debug,
     M: Copy + Magma<R>,
-    Solver: Fn(I) -> State<I, R>,
+    Solver: GetState<I, State<I, R>>,
 > DP<'dp, I, R> for PartialTopDownDP<'dp, I, R, M, Solver> {
     type State = State<I, R>;
 
     fn dp(&'dp self, initial_index: I) -> R {
-        let solve_result_ref = (self.solver)(initial_index);
+        let solve_result_ref = self.solver.get(initial_index);
         // println!("computed {initial_index:?}, {:?}", &solve_result_ref);
         match solve_result_ref {
             State::Intermediate { dependent } => {

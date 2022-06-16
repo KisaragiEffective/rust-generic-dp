@@ -14,6 +14,7 @@ use std::rc::Rc;
 use non_empty_vec::{ne_vec, NonEmpty};
 use crate::cache::{CacheAll, NoCache};
 use crate::collecting::{Magma, ReduceByMagma, Reducer, Sum};
+use crate::dp::get_state::Factory;
 use crate::dp::simple::State;
 use crate::dp::topdown;
 use crate::dp::topdown::TopDownDP;
@@ -40,34 +41,55 @@ fn main() {
     run_dp(
         30,
         &TopDownDP::new(
-            f,
-            NoCache,
+            Factory::function(f)
         )
     );
     run_dp(
         30,
         &TopDownDP::new(
-            f,
-            CacheAll::new(),
+            Factory::function_with_cache(f, CacheAll::new())
         )
     );
 
     {
         let dp = dp::simple_dp(
-            |k: i32| {
-                if k == 0 || k == 1 {
-                    State::Base {
-                        base_result: 1
-                    }
-                } else {
-                    State::Intermediate {
-                        dependent: ne_vec![k - 1, k - 2]
+            Factory::function(
+                |k: i32| {
+                    if k == 0 || k == 1 {
+                        State::Base {
+                            base_result: 1
+                        }
+                    } else {
+                        State::Intermediate {
+                            dependent: ne_vec![k - 1, k - 2]
+                        }
                     }
                 }
-            },
+            ),
             Sum::new(),
         );
-        println!("{}", run_print_time("the dp function", || dp.dp(30)));
+        println!("{}", run_print_time("simple dp w/o memoize", || dp.dp(30)));
+    }
+
+    {
+        let dp = dp::simple_dp(
+            Factory::function_with_cache(
+                |k: i32| {
+                    if k == 0 || k == 1 {
+                        State::Base {
+                            base_result: 1
+                        }
+                    } else {
+                        State::Intermediate {
+                            dependent: ne_vec![k - 1, k - 2]
+                        }
+                    }
+                },
+                CacheAll::new()
+            ),
+            Sum::new(),
+        );
+        println!("{}", run_print_time("simple dp w/ cache by hashmap", || dp.dp(30)));
     }
     /*
     match guard.report().build() {
