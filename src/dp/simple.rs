@@ -48,7 +48,7 @@ impl<
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum State<I, R> {
     Base {
         base_result: R,
