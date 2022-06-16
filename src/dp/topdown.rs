@@ -57,6 +57,8 @@ impl<
     Solver: Fn(I) -> Rc<State<R, PartialProblemAnswerCombiner, I>>,
     Cache: CachePolicy<I, Rc<State<R, PartialProblemAnswerCombiner, I>>>,
 > DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, Cache> {
+    type State = Rc<State<R, PartialProblemAnswerCombiner, I>>;
+
     fn dp(&'dp self, initial_index: I) -> R {
         use crate::perf::run_print_time;
         let xyy = {

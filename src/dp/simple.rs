@@ -20,6 +20,8 @@ impl<
     M: Copy + Magma<R>,
     Solver: Fn(I) -> State<I, R>,
 > DP<'dp, I, R> for PartialTopDownDP<'dp, I, R, M, Solver> {
+    type State = State<I, R>;
+
     fn dp(&'dp self, initial_index: I) -> R {
         use crate::perf::run_print_time;
         let solve_result_ref = (self.solver)(initial_index);
