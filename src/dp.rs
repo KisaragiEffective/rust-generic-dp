@@ -1,6 +1,11 @@
+use std::borrow::{Borrow, BorrowMut};
+use std::cell::RefCell;
+use std::fmt::Display;
 use non_empty_vec::NonEmpty;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
+use std::ops::Deref;
+use std::rc::Rc;
 use crate::cache::CachePolicy;
 use crate::collecting::Magma;
 use crate::ProblemState;
@@ -17,7 +22,8 @@ pub struct TopDownDP<
 > {
     solver: Solver,
     combiner: Combiner,
-    cache_policy: Cache,
+    // earn internal-mutability
+    cache_policy: RefCell<Cache>,
     __phantoms: PhantomData<(I, ProbAnswer, SRI, PartialProblemAnswerCombiner)>
 }
 
@@ -34,7 +40,7 @@ impl<
         Self {
             solver,
             combiner,
-            cache_policy,
+            cache_policy: RefCell::new(cache_policy),
             __phantoms: PhantomData,
         }
     }
@@ -86,18 +92,31 @@ impl<
     I: Copy,
     R: Clone,
     PartialProblemAnswerCombiner: Clone + Fn(NonEmpty<Vec<R>>) -> R,
-    Solver: Fn(I) -> PS,
-    PS: Clone + AsRef<ProblemState<R, PartialProblemAnswerCombiner, I>>,
+    Solver: Fn(I) -> Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>,
     BinaryCombiner: Magma<R>,
-    Cache: CachePolicy<I, PS>,
+    Cache: CachePolicy<I, Rc<ProblemState<R, PartialProblemAnswerCombiner, I>>>,
 > DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, BinaryCombiner, Cache> {
     fn dp(&'dp self, initial_index: I) -> R {
-        let solve_result = match self.cache_policy.get(&initial_index) {
-            None => (self.solver)(initial_index).clone(),
+        use crate::perf::run_print_time;
+        let xyy = {
+            // あえてスコープを狭めないと関数スコープで生き続けてBorrowErrorでパニックする
+            let ck = self.cache_policy.borrow();
+            let xy = ck.get(&initial_index).cloned();
+            xy
+        };
+
+        let solve_result = match xyy {
+            None => {
+                let value = (self.solver)(initial_index);
+                self.cache_policy.borrow_mut().set(initial_index, Rc::new(value.as_ref().clone()));
+                value
+            },
             Some(a) => a.clone(),
         };
 
-        match solve_result.as_ref() {
+        let solve_result_ref = solve_result.as_ref();
+
+        match solve_result_ref {
             ProblemState::Intermediate { composer, dependent } => {
                 let inner = &dependent[0];
                 let len = inner.len();

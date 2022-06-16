@@ -10,6 +10,7 @@ use std::io::Write;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ops::{Deref, Index};
+use std::rc::Rc;
 use std::time::Instant;
 use non_empty_vec::NonEmpty;
 use crate::dp_traits::DP;
@@ -25,20 +26,22 @@ fn main() {
         30,
         &TopDownDP::new(
             |k: i32| {
-                if k == 0 {
-                    ProblemState::Base {
-                        base_result: 1
+                Rc::new(
+                    if k == 0 {
+                        ProblemState::Base {
+                            base_result: 1
+                        }
+                    } else if k == 1 {
+                        ProblemState::Base {
+                            base_result: 1
+                        }
+                    } else {
+                        ProblemState::Intermediate {
+                            composer: |a| a[0].iter().fold(0, |a, b| a + b),
+                            dependent: NonEmpty::new(vec![k - 1, k - 2])
+                        }
                     }
-                } else if k == 1 {
-                    ProblemState::Base {
-                        base_result: 1
-                    }
-                } else {
-                    ProblemState::Intermediate {
-                        composer: |a| a[0].iter().fold(0, |a, b| a + b),
-                        dependent: NonEmpty::new(vec![k - 1, k - 2])
-                    }
-                }
+                )
             },
             crate::collecting::Sum::new(),
             NoCache,
@@ -48,20 +51,22 @@ fn main() {
         30,
         &TopDownDP::new(
             |k: i32| {
-                if k == 0 {
-                    ProblemState::Base {
-                        base_result: 1
+                Rc::new(
+                    if k == 0 {
+                        ProblemState::Base {
+                            base_result: 1
+                        }
+                    } else if k == 1 {
+                        ProblemState::Base {
+                            base_result: 1
+                        }
+                    } else {
+                        ProblemState::Intermediate {
+                            composer: |a| a[0].iter().fold(0, |a, b| a + b),
+                            dependent: NonEmpty::new(vec![k - 1, k - 2])
+                        }
                     }
-                } else if k == 1 {
-                    ProblemState::Base {
-                        base_result: 1
-                    }
-                } else {
-                    ProblemState::Intermediate {
-                        composer: |a| a[0].iter().fold(0, |a, b| a + b),
-                        dependent: NonEmpty::new(vec![k - 1, k - 2])
-                    }
-                }
+                )
             },
             crate::collecting::Sum::new(),
             CacheAll::new(),
