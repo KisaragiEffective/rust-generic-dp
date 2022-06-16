@@ -55,11 +55,7 @@ fn main() {
     {
         let dp = dp::simple_dp(
             |k: i32| {
-                if k == 0 {
-                    State::Base {
-                        base_result: 0
-                    }
-                } else if k == 1 {
+                if k == 0 || k == 1 {
                     State::Base {
                         base_result: 1
                     }
@@ -71,8 +67,7 @@ fn main() {
             },
             Sum::new(),
         );
-        // FIXME: off-by-one error?
-        println!("{}", run_print_time("the dp function", || dp.dp(31)));
+        println!("{}", run_print_time("the dp function", || dp.dp(30)));
     }
     /*
     match guard.report().build() {
