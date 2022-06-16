@@ -1,5 +1,6 @@
 use non_empty_vec::NonEmpty;
 use std::marker::PhantomData;
+use crate::collecting::Magma;
 use crate::ProblemState;
 use crate::dp_traits::{DP, DPOwned};
 
@@ -22,7 +23,7 @@ impl<
     SRI,
     PartialProblemAnswerCombiner: Fn(NonEmpty<Vec<ProbAnswer>>) -> ProbAnswer,
     Solver: Fn(SRI) -> ProblemState<ProbAnswer, PartialProblemAnswerCombiner, I>,
-    Combiner: Fn(ProbAnswer, ProbAnswer) -> ProbAnswer
+    Combiner: Magma<ProbAnswer>
 > TopDownDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver, Combiner> {
     pub(crate) fn new(solver: Solver, combiner: Combiner) -> Self {
         Self {
@@ -68,7 +69,7 @@ impl<
     R,
     PartialProblemAnswerCombiner: Fn(NonEmpty<Vec<R>>) -> R,
     Solver: Fn(I) -> ProblemState<R, PartialProblemAnswerCombiner, I>,
-    BinaryCombiner: Fn(R, R) -> R
+    BinaryCombiner: Magma<R>
 > DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, BinaryCombiner> {
     fn dp(&'dp self, initial_index: I) -> R {
         let solve_result = (self.solver)(initial_index);
