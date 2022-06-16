@@ -71,13 +71,24 @@ impl<
  */
 
 impl<
+    R,
+    PartialProblemAnswerCombiner: Fn(NonEmpty<Vec<R>>) -> R,
+    I
+> AsRef<ProblemState<R, PartialProblemAnswerCombiner, I>> for ProblemState<R, PartialProblemAnswerCombiner, I> {
+    fn as_ref(&self) -> &ProblemState<R, PartialProblemAnswerCombiner, I> {
+        self
+    }
+}
+
+impl<
     'dp,
     I: Copy,
     R: Clone,
     PartialProblemAnswerCombiner: Clone + Fn(NonEmpty<Vec<R>>) -> R,
-    Solver: Fn(I) -> ProblemState<R, PartialProblemAnswerCombiner, I>,
+    Solver: Fn(I) -> PS,
+    PS: Clone + AsRef<ProblemState<R, PartialProblemAnswerCombiner, I>>,
     BinaryCombiner: Magma<R>,
-    Cache: CachePolicy<I, ProblemState<R, PartialProblemAnswerCombiner, I>>,
+    Cache: CachePolicy<I, PS>,
 > DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver, BinaryCombiner, Cache> {
     fn dp(&'dp self, initial_index: I) -> R {
         let solve_result = match self.cache_policy.get(&initial_index) {
@@ -87,8 +98,11 @@ impl<
 
         match solve_result {
             ProblemState::Intermediate { composer, dependent } => {
-                let mut temp = vec![];
-                for x in &dependent[0] {
+                let inner = &dependent[0];
+                let len = inner.len();
+                // TODO: this can be uninited, later we overwrite anyway.
+                let mut temp = Vec::with_capacity(len);
+                for x in inner {
                     let lp = self.dp(*x);
                     temp.push(lp);
                 }
