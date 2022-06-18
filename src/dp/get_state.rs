@@ -2,22 +2,34 @@ use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::rc::Rc;
 use crate::cache::ArbitraryScopeCachePolicy;
+use crate::dp::state::StateExtractor;
 
-pub trait GetState<Input, State> {
-    fn get(&self, input: Input) -> State;
-    fn update_cache(&self, input: Input, get: State);
+pub trait ProblemProxy<Input, State, Answer> {
+    /// always solve problem.
+    fn compute(&self, input: Input) -> State;
+    /// update cache if supported.
+    /// if not supported, this is no-op.
+    fn update_cache(&self, input: Input, answer: Answer);
+    /// get answer without solving.
+    /// if does not hit cache, this should be return None.
+    /// if the implementor does not support cache, this may be always None.
+    fn get(&self, input: Input) -> Option<Answer>;
 }
 
 pub struct SolverFactory;
 impl SolverFactory {
-    pub fn function<Input, State>(f: impl Fn(Input) -> State) -> impl GetState<Input, State> {
+    pub fn function<Input, State: StateExtractor<PartialAnswer>, PartialAnswer>(f: impl Fn(Input) -> State) -> impl ProblemProxy<Input, State, PartialAnswer> {
         Function(f, PhantomData)
     }
 
-    pub fn function_with_cache<Input: Clone, State: Clone>(f: impl Fn(Input) -> State, cache: impl ArbitraryScopeCachePolicy<Input, State>) -> impl GetState<Input, State> {
+    pub fn function_with_cache<
+        Input: Clone,
+        State: Clone + StateExtractor<PartialAnswer>,
+        PartialAnswer: Clone
+    >(f: impl Fn(Input) -> State, cache: impl ArbitraryScopeCachePolicy<Input, PartialAnswer>) -> impl ProblemProxy<Input, State, PartialAnswer> {
         FunctionWithCache {
             f,
-            rc: RefCell::new(cache),
+            cache_repo: RefCell::new(cache),
             _p: PhantomData
         }
     }
@@ -31,36 +43,49 @@ impl SolverFactory {
     }
 }
 
-struct Function<F: Fn(Input) -> State, Input, State>(F, PhantomData<(Input, State)>);
-impl<F: Fn(I) -> S, I, S> GetState<I, S> for Function<F, I, S> {
-    fn get(&self, input: I) -> S {
+struct Function<F: Fn(Input) -> State, Input, State: StateExtractor<PA>, PA>(F, PhantomData<(Input, State, PA)>);
+impl<F: Fn(I) -> S, I, S: StateExtractor<PA>, PA> ProblemProxy<I, S, PA> for Function<F, I, S, PA> {
+    fn compute(&self, input: I) -> S {
         (self.0)(input)
     }
 
     #[inline]
-    fn update_cache(&self, _input: I, _get: S) {
+    fn update_cache(&self, _input: I, _get: PA) {
+    }
+
+    fn get(&self, _input: I) -> Option<PA> {
+        None
     }
 }
 
-struct FunctionWithCache<F: Fn(Input) -> State, CP: ArbitraryScopeCachePolicy<Input, State>, Input, State> {
+struct FunctionWithCache<F: Fn(Input) -> State, CP: ArbitraryScopeCachePolicy<Input, PartialAnswer>, Input, State, PartialAnswer> {
     f: F,
-    rc: RefCell<CP>,
-    _p: PhantomData<(Input, State)>,
+    cache_repo: RefCell<CP>,
+    _p: PhantomData<(Input, State, PartialAnswer)>,
 }
 
-impl<F: Fn(I) -> S, CP: ArbitraryScopeCachePolicy<I, S>, I: Clone, S: Clone> GetState<I, S> for FunctionWithCache<F, CP, I, S> {
-    fn get(&self, input: I) -> S {
-        let cache_result = self.rc.borrow().get(&input).cloned();
-        cache_result.unwrap_or_else(|| {
-            let v = &(self.f)(input.clone());
-            let v = v.clone();
-            self.update_cache(input, v.clone());
-            v
-        })
+impl<
+    F: Fn(I) -> S,
+    CP: ArbitraryScopeCachePolicy<I, PA>,
+    I: Clone,
+    S: Clone + StateExtractor<PA>,
+    PA: Clone,
+> ProblemProxy<I, S, PA> for FunctionWithCache<F, CP, I, S, PA> {
+    fn compute(&self, input: I) -> S {
+        let v = &(self.f)(input.clone());
+        let v = v.clone();
+        v.get_value().map_or_else(|| (), |pa| {
+            self.update_cache(input, pa);
+        });
+        v
     }
 
-    fn update_cache(&self, input: I, get: S) {
-        self.rc.borrow_mut().set(input, get);
+    fn update_cache(&self, input: I, get: PA) {
+        self.cache_repo.borrow_mut().set(input, get);
+    }
+
+    fn get(&self, input: I) -> Option<PA> {
+        self.cache_repo.borrow().get(&input).cloned()
     }
 }
 
