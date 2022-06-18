@@ -17,8 +17,8 @@ pub trait ArbitraryScopeCachePolicy<K, V>: for<'a> ScopedCachePolicy<'a, K, V> {
 
 impl <ASCP: for<'a> ScopedCachePolicy<'a, K, V>, K, V> ArbitraryScopeCachePolicy<K, V> for ASCP {}
 
-pub trait ScopedCachePolicy<'a, K: 'a, V: 'a> {
-    fn get(&'a self, k: &'a K) -> Option<&'a V>;
+pub trait ScopedCachePolicy<'a, K, V> {
+    fn get(&'a self, k: &K) -> Option<&'a V>;
     fn set(&'a mut self, k: K, v: V);
 }
 
@@ -34,8 +34,8 @@ impl<K, V> CacheAll<K, V> {
     }
 }
 
-impl<'a, K: 'a +  Eq + Hash, V: 'a> ScopedCachePolicy<'a, K, V> for CacheAll<K, V> {
-    fn get(&'a self, k: &'a K) -> Option<&'a V> {
+impl<'a, K: Eq + Hash, V> ScopedCachePolicy<'a, K, V> for CacheAll<K, V> {
+    fn get(&'a self, k: &K) -> Option<&'a V> {
         self.inner.get(k)
     }
 
@@ -46,7 +46,7 @@ impl<'a, K: 'a +  Eq + Hash, V: 'a> ScopedCachePolicy<'a, K, V> for CacheAll<K, 
 
 pub struct NoCache;
 
-impl<'a, K: 'a, V: 'a> ScopedCachePolicy<'a, K, V> for NoCache {
+impl<'a, K, V> ScopedCachePolicy<'a, K, V> for NoCache {
     fn get(&self, k: &K) -> Option<&V> {
         None
     }
@@ -104,7 +104,7 @@ impl <T, const N: usize> Default for CacheArray<T, N> {
     }
 }
 
-impl <'a, V: 'a, const N: usize> ScopedCachePolicy<'a, usize, V> for CacheArray<V, N> {
+impl <'a, V, const N: usize> ScopedCachePolicy<'a, usize, V> for CacheArray<V, N> {
     fn get(&self, k: &usize) -> Option<&V> {
         self.0.get(*k)
             .and_then(Option::as_ref)
