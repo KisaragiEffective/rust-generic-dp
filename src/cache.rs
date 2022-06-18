@@ -10,6 +10,7 @@ pub trait SmartPointerBackedCachePolicy<SPK: Deref<Target=K>, K, SPV: Deref<Targ
  */
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::ops::IndexMut;
 use std::rc::Rc;
 
 pub trait ArbitraryScopeCachePolicy<K, V>: for<'a> ScopedCachePolicy<'a, K, V> {
@@ -106,13 +107,11 @@ impl <T, const N: usize> Default for CacheArray<T, N> {
 
 impl <'a, V, const N: usize> ScopedCachePolicy<'a, usize, V> for CacheArray<V, N> {
     fn get(&self, k: &usize) -> Option<&V> {
-        self.0.get(*k)
-            .and_then(Option::as_ref)
-            .map(|ref_box| ref_box.clone())
-            .map(|rc| rc.as_ref())
+        todo!()
     }
 
     fn set(&mut self, k: usize, v: V) {
-        self.0[k] = Some(Rc::new(v));
+        let mut g = self.0.index_mut(k);
+        g = &mut Some(Rc::new(v));
     }
 }
