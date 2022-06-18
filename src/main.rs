@@ -15,7 +15,7 @@ use std::rc::Rc;
 use non_empty_vec::{ne_vec, NonEmpty};
 use crate::cache::{CacheAll, NoCache};
 use crate::collecting::{Magma, ReduceByMagma, Reducer, Sum};
-use crate::dp::get_state::Factory;
+use crate::dp::get_state::SolverFactory;
 use crate::dp::simple::State;
 use crate::dp::topdown;
 use crate::dp::topdown::TopDownDP;
@@ -42,19 +42,19 @@ fn main() {
     run_dp(
         30,
         &TopDownDP::new(
-            Factory::function(f)
+            SolverFactory::function(f)
         )
     );
     run_dp(
         30,
         &TopDownDP::new(
-            Factory::function_with_cache(f, CacheAll::new())
+            SolverFactory::function_with_cache(f, CacheAll::new())
         )
     );
 
     {
         let dp = dp::simple_dp(
-            Factory::function(
+            SolverFactory::function(
                 |k: i32| {
                     if k == 0 || k == 1 {
                         State::Base {
@@ -74,7 +74,7 @@ fn main() {
 
     {
         let dp = dp::simple_dp(
-            Factory::function_with_cache(
+            SolverFactory::function_with_cache(
                 |k: i32| {
                     if k == 0 || k == 1 {
                         State::Base {
@@ -95,7 +95,7 @@ fn main() {
 
     {
         let dp = dp::simple_dp(
-            Factory::function_with_cache(
+            SolverFactory::function_with_cache(
                 |k: usize| {
                     if k == 0 || k == 1 {
                         State::Base {
@@ -116,7 +116,8 @@ fn main() {
 
     {
         let dp = dp::simple_dp(
-            Factory::function_with_cache(
+
+            SolverFactory::function_with_cache(
                 |k: usize| {
                     if k == 0 || k == 1 {
                         State::Base {

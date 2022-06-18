@@ -8,8 +8,8 @@ pub trait GetState<Input, State> {
     fn update_cache(&self, input: Input, get: State);
 }
 
-pub struct Factory;
-impl Factory {
+pub struct SolverFactory;
+impl SolverFactory {
     pub fn function<Input, State>(f: impl Fn(Input) -> State) -> impl GetState<Input, State> {
         Function(f, PhantomData)
     }
