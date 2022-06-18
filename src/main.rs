@@ -114,6 +114,7 @@ fn main() {
         println!("{}", run_print_time("simple dp w/ cache by vec", || dp.dp(30)));
     }
 
+    /*
     {
         let dp = dp::simple_dp(
 
@@ -135,6 +136,8 @@ fn main() {
         );
         println!("{}", run_print_time("simple dp w/ cache by vec", || dp.dp(30)));
     }
+
+     */
     /*
     match guard.report().build() {
         Ok(report) => {
