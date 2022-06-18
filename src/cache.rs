@@ -1,12 +1,25 @@
 #![allow(clippy::module_name_repetitions)]
 
+/*
+use std::ops::Deref;
+pub trait SmartPointerBackedCachePolicy<SPK: Deref<Target=K>, K, SPV: Deref<Target=V>, V> {
+    fn get_smart_pointer(&self, k: SPK) -> Option<SPV>;
+    fn set_by_smart_pointer(&self, k: SPK, v: SPV);
+}
+
+ */
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::rc::Rc;
 
-pub trait CachePolicyByRef<K, V> {
-    fn get(&self, k: &K) -> Option<&V>;
-    fn set(&mut self, k: K, v: V);
+pub trait ArbitraryScopeCachePolicy<K, V>: for<'a> ScopedCachePolicy<'a, K, V> {
+}
+
+impl <ASCP: for<'a> ScopedCachePolicy<'a, K, V>, K, V> ArbitraryScopeCachePolicy<K, V> for ASCP {}
+
+pub trait ScopedCachePolicy<'a, K: 'a, V: 'a> {
+    fn get(&'a self, k: &'a K) -> Option<&'a V>;
+    fn set(&'a mut self, k: K, v: V);
 }
 
 pub struct CacheAll<K, V> {
@@ -20,19 +33,20 @@ impl<K, V> CacheAll<K, V> {
         }
     }
 }
-impl<K: Eq + Hash, V> CachePolicyByRef<K, V> for CacheAll<K, V> {
-    fn get(&self, k: &K) -> Option<&V> {
+
+impl<'a, K: 'a +  Eq + Hash, V: 'a> ScopedCachePolicy<'a, K, V> for CacheAll<K, V> {
+    fn get(&'a self, k: &'a K) -> Option<&'a V> {
         self.inner.get(k)
     }
 
-    fn set(&mut self, k: K, v: V) {
+    fn set(&'a mut self, k: K, v: V) {
         self.inner.insert(k, v);
     }
 }
 
 pub struct NoCache;
 
-impl<K, V> CachePolicyByRef<K, V> for NoCache {
+impl<'a, K: 'a, V: 'a> ScopedCachePolicy<'a, K, V> for NoCache {
     fn get(&self, k: &K) -> Option<&V> {
         None
     }
@@ -55,7 +69,7 @@ impl <V> CacheVec<V> {
     }
 }
 
-impl <V: Clone> CachePolicyByRef<usize, V> for CacheVec<V> {
+impl<'a, V: Clone + 'a> ScopedCachePolicy<'a, usize, V> for CacheVec<V> {
     fn get(&self, k: &usize) -> Option<&V> {
         self.0.get(*k).and_then(Option::as_ref)
     }
@@ -90,7 +104,7 @@ impl <T, const N: usize> Default for CacheArray<T, N> {
     }
 }
 
-impl <V, const N: usize> CachePolicyByRef<usize, V> for CacheArray<V, N> {
+impl <'a, V: 'a, const N: usize> ScopedCachePolicy<'a, usize, V> for CacheArray<V, N> {
     fn get(&self, k: &usize) -> Option<&V> {
         self.0.get(*k)
             .and_then(Option::as_ref)

@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::rc::Rc;
 use non_empty_vec::NonEmpty;
-use crate::cache::CachePolicyByRef;
+use crate::cache::ArbitraryScopeCachePolicy;
 use crate::collecting::Reducer;
 use crate::dp::get_state::GetState;
 use crate::dp::traits::DP;
