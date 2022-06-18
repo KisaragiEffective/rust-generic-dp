@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::marker::PhantomData;
-use std::rc::Rc;
 use crate::cache::ArbitraryScopeCachePolicy;
 use crate::dp::state::StateExtractor;
 
@@ -30,14 +29,6 @@ impl SolverFactory {
         FunctionWithCache {
             f,
             cache_repo: RefCell::new(cache),
-            _p: PhantomData
-        }
-    }
-
-    pub fn function_with_cache_rc<Input, State>(f: impl Fn(Rc<Input>) -> Rc<State>, cache: impl ArbitraryScopeCachePolicy<Rc<Input>, Rc<State>>) -> impl GetState<Rc<Input>, Rc<State>> {
-        FunctionWithCacheRc {
-            f,
-            cache_policy: RefCell::new(cache),
             _p: PhantomData
         }
     }
@@ -86,26 +77,5 @@ impl<
 
     fn get(&self, input: I) -> Option<PA> {
         self.cache_repo.borrow().get(&input).cloned()
-    }
-}
-
-struct FunctionWithCacheRc<F: Fn(Rc<Input>) -> Rc<State>, CP: ArbitraryScopeCachePolicy<Rc<Input>, Rc<State>>, Input, State> {
-    f: F,
-    cache_policy: RefCell<CP>,
-    _p: PhantomData<(Input, State)>,
-}
-
-impl<F: Fn(Rc<I>) -> Rc<S>, CP: ArbitraryScopeCachePolicy<Rc<I>, Rc<S>>, I, S> GetState<Rc<I>, Rc<S>> for FunctionWithCacheRc<F, CP, I, S> {
-    fn get(&self, input: Rc<I>) -> Rc<S> {
-        let x = self.cache_policy.borrow().get(&input).cloned();
-        x.unwrap_or_else(|| {
-            let v = (self.f)(input.clone());
-            self.update_cache(input, v.clone());
-            v
-        })
-    }
-
-    fn update_cache(&self, input: Rc<I>, get: Rc<S>) {
-        self.cache_policy.borrow_mut().set(input, get);
     }
 }
