@@ -22,6 +22,7 @@ use crate::dp::topdown::TopDownDP;
 use crate::dp::traits::{DP, DPOwned};
 use crate::perf::run_print_time;
 
+#[allow(clippy::too_many_lines)]
 fn main() {
     // let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
     let f = |k: i32| {
@@ -114,7 +115,7 @@ fn main() {
         println!("{}", run_print_time("simple dp w/ cache by vec", || dp.dp(30)));
     }
 
-    /*
+
     {
         let dp = dp::simple_dp(
 
@@ -130,14 +131,13 @@ fn main() {
                         }
                     }
                 },
-                cache::CacheArray::<_, 30>::new()
+                cache::CacheArray::<_, 31>::new()
             ),
             Sum::new(),
         );
-        println!("{}", run_print_time("simple dp w/ cache by vec", || dp.dp(30)));
+        println!("{}", run_print_time("simple dp w/ cache by array", || dp.dp(30)));
     }
 
-     */
     /*
     match guard.report().build() {
         Ok(report) => {

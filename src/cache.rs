@@ -91,27 +91,30 @@ impl<'a, V: Clone + 'a> ScopedCachePolicy<'a, usize, V> for CacheVec<V> {
 }
 
 #[derive(Debug)]
-pub struct CacheArray<T: ?Sized, const N: usize>([Option<Rc<T>>; N]);
+pub struct CacheArray<T, const N: usize>([Option<T>; N]);
 
-impl <T: Clone + ?Sized, const N: usize> CacheArray<T, N> {
+impl <T: Clone, const L: usize> CacheArray<T, L> {
     pub fn new() -> Self {
-        CacheArray([None; N])
+        let temp_vec: Vec<Option<T>> = vec![None; L];
+        let temp_slice = temp_vec.as_slice();
+        let coerced_slice: &[Option<T>; L] = temp_slice.try_into().unwrap();
+        let cloned_slice = coerced_slice.clone();
+        Self(cloned_slice)
     }
 }
 
-impl <T, const N: usize> Default for CacheArray<T, N> {
+impl <T: Clone, const N: usize> Default for CacheArray<T, N> {
     fn default() -> Self {
-        Self([None; N])
+        Self::new()
     }
 }
 
 impl <'a, V, const N: usize> ScopedCachePolicy<'a, usize, V> for CacheArray<V, N> {
     fn get(&self, k: &usize) -> Option<&V> {
-        todo!()
+        self.0.get(*k).and_then(Option::as_ref)
     }
 
     fn set(&mut self, k: usize, v: V) {
-        let mut g = self.0.index_mut(k);
-        g = &mut Some(Rc::new(v));
+        self.0[k] = Some(v);
     }
 }
