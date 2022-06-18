@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::rc::Rc;
 
-pub trait CachePolicy<K, V> {
+pub trait CachePolicyByRef<K, V> {
     fn get(&self, k: &K) -> Option<&V>;
     fn set(&mut self, k: K, v: V);
 }
@@ -20,7 +20,7 @@ impl<K, V> CacheAll<K, V> {
         }
     }
 }
-impl<K: Eq + Hash, V> CachePolicy<K, V> for CacheAll<K, V> {
+impl<K: Eq + Hash, V> CachePolicyByRef<K, V> for CacheAll<K, V> {
     fn get(&self, k: &K) -> Option<&V> {
         self.inner.get(k)
     }
@@ -32,7 +32,7 @@ impl<K: Eq + Hash, V> CachePolicy<K, V> for CacheAll<K, V> {
 
 pub struct NoCache;
 
-impl<K, V> CachePolicy<K, V> for NoCache {
+impl<K, V> CachePolicyByRef<K, V> for NoCache {
     fn get(&self, k: &K) -> Option<&V> {
         None
     }
@@ -55,7 +55,7 @@ impl <V> CacheVec<V> {
     }
 }
 
-impl <V: Clone> CachePolicy<usize, V> for CacheVec<V> {
+impl <V: Clone> CachePolicyByRef<usize, V> for CacheVec<V> {
     fn get(&self, k: &usize) -> Option<&V> {
         self.0.get(*k).and_then(Option::as_ref)
     }
@@ -90,7 +90,7 @@ impl <T, const N: usize> Default for CacheArray<T, N> {
     }
 }
 
-impl <V, const N: usize> CachePolicy<usize, V> for CacheArray<V, N> {
+impl <V, const N: usize> CachePolicyByRef<usize, V> for CacheArray<V, N> {
     fn get(&self, k: &usize) -> Option<&V> {
         self.0.get(*k)
             .and_then(Option::as_ref)
