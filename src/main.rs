@@ -92,6 +92,48 @@ fn main() {
         );
         println!("{}", run_print_time("simple dp w/ cache by hashmap", || dp.dp(30)));
     }
+
+    {
+        let dp = dp::simple_dp(
+            Factory::function_with_cache(
+                |k: usize| {
+                    if k == 0 || k == 1 {
+                        State::Base {
+                            base_result: 1
+                        }
+                    } else {
+                        State::Intermediate {
+                            dependent: ne_vec![k - 1, k - 2]
+                        }
+                    }
+                },
+                cache::CacheVec::new()
+            ),
+            Sum::new(),
+        );
+        println!("{}", run_print_time("simple dp w/ cache by vec", || dp.dp(30)));
+    }
+
+    {
+        let dp = dp::simple_dp(
+            Factory::function_with_cache(
+                |k: usize| {
+                    if k == 0 || k == 1 {
+                        State::Base {
+                            base_result: 1
+                        }
+                    } else {
+                        State::Intermediate {
+                            dependent: ne_vec![k - 1, k - 2]
+                        }
+                    }
+                },
+                cache::CacheArray::<_, 30>::new()
+            ),
+            Sum::new(),
+        );
+        println!("{}", run_print_time("simple dp w/ cache by vec", || dp.dp(30)));
+    }
     /*
     match guard.report().build() {
         Ok(report) => {
