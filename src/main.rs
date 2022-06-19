@@ -25,7 +25,7 @@ use crate::perf::run_print_time;
 #[allow(clippy::too_many_lines)]
 fn main() {
     let f = |k: i32| {
-        Rc::new(
+        (
             if k == 0 || k == 1 {
                 topdown::State::Base {
                     base_result: 1
