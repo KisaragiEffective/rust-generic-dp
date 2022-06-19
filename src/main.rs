@@ -6,20 +6,15 @@ mod cache;
 mod perf;
 mod wrap_unsafe;
 
-use std::borrow::Borrow;
-use std::fmt::{Debug, Display};
-use std::marker::PhantomData;
-use std::mem::MaybeUninit;
-use std::ops::Deref;
-use std::rc::Rc;
+use std::fmt::Display;
 use non_empty_vec::{ne_vec, NonEmpty};
-use crate::cache::{CacheAll, NoCache};
-use crate::collecting::{Magma, ReduceByMagma, Reducer, Sum};
+use crate::cache::CacheAll;
+use crate::collecting::Sum;
 use crate::dp::get_state::SolverFactory;
 use crate::dp::simple::State;
 use crate::dp::topdown;
 use crate::dp::topdown::TopDownDP;
-use crate::dp::traits::{DP, DPOwned};
+use crate::dp::traits::DP;
 use crate::perf::run_print_time;
 
 #[allow(clippy::too_many_lines)]
@@ -175,19 +170,4 @@ fn main() {
 
 fn run_dp<'a, Index, Output: 'a + Display>(index: Index, dp: &'a (impl DP<'a, Index, Output> + 'a)) {
     println!("{}", run_print_time("the dp function", || dp.dp(index)));
-}
-
-struct DPCopied<'r, 'a, Index, Answer: Copy, D>(D, PhantomData<(&'r (), &'a (), Index, Answer)>);
-
-impl<'se, 'a, Index, Answer: 'se + Copy, D: 'se + DP<'se, Index, &'se Answer>> DPOwned<'se, Index, Answer> for DPCopied<'se, 'a, Index, Answer, D> {
-    fn dp_owned(&'se self, index: Index) -> Answer {
-        *self.0.dp(index)
-    }
-}
-
-trait CollectingPolicy {
-    type FoldType;
-    fn join(lhs: Self::FoldType, rhs: Self::FoldType) -> Self::FoldType;
-
-    fn empty_element() -> Self::FoldType;
 }
