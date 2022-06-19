@@ -6,6 +6,14 @@ pub trait Magma<A> {
     fn combine(&self, lhs: A, rhs: A) -> A;
 }
 
+/// An marker trait implies that the operation is commutative.
+/// In other words, the implementation must be follow below property:
+///     f(a, b) == f(b, a)
+///
+/// where f is `Magma::combine` implementation, `a: A`, and `b: A`.
+/// It is useful when combining in parallel.
+pub trait Commutative {}
+
 impl<F: Copy + FnOnce(A, A) -> A, A: Copy> Magma<A> for F {
     fn combine(&self, lhs: A, rhs: A) -> A {
         self(lhs, rhs)
