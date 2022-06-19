@@ -23,7 +23,7 @@ impl SolverFactory {
 
     pub fn function_with_cache<
         Input: Clone,
-        State: Clone + StateExtractor<PartialAnswer>,
+        State: StateExtractor<PartialAnswer>,
         PartialAnswer: Clone
     >(f: impl Fn(Input) -> State, cache: impl ArbitraryScopeCachePolicy<Input, PartialAnswer>) -> impl ProblemProxy<Input, State, PartialAnswer> {
         FunctionWithCache {
@@ -59,13 +59,12 @@ impl<
     F: Fn(I) -> S,
     CP: ArbitraryScopeCachePolicy<I, PA>,
     I: Clone,
-    S: Clone + StateExtractor<PA>,
+    S: StateExtractor<PA>,
     PA: Clone,
 > ProblemProxy<I, S, PA> for FunctionWithCache<F, CP, I, S, PA> {
     fn compute(&self, input: I) -> S {
-        let v = &(self.f)(input.clone());
-        let v = v.clone();
-        v.get_value().map_or_else(|| (), |pa| {
+        let v = (self.f)(input.clone());
+        v.get_value().map_or((), |pa| {
             self.update_cache(input, pa);
         });
         v
