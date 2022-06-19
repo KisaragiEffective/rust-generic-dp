@@ -24,7 +24,6 @@ use crate::perf::run_print_time;
 
 #[allow(clippy::too_many_lines)]
 fn main() {
-    // let guard = pprof::ProfilerGuardBuilder::default().frequency(1000).blocklist(&["libc", "libgcc", "pthread", "vdso"]).build().unwrap();
     let f = |k: i32| {
         Rc::new(
             if k == 0 || k == 1 {
@@ -137,24 +136,6 @@ fn main() {
         );
         println!("{}", run_print_time("simple dp w/ cache by array", || dp.dp(30)));
     }
-
-    /*
-    match guard.report().build() {
-        Ok(report) => {
-            use pprof::protos::Message;
-            let mut file = File::create("profile.pb").unwrap();
-            let profile = report.pprof().unwrap();
-
-            let mut content = Vec::new();
-            profile.encode(&mut content).unwrap();
-            file.write_all(&content).unwrap();
-
-            // println!("report: {:?}", &report);
-        }
-        Err(_) => {}
-    };
-
-     */
 }
 
 fn run_dp<'a, Index, Output: 'a + Display>(index: Index, dp: &'a (impl DP<'a, Index, Output> + 'a)) {

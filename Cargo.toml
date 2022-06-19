@@ -7,4 +7,3 @@ edition = "2021"
 
 [dependencies]
 non-empty-vec = "0.2.3"
-pprof = { version = "0.6.2", features = ["flamegraph", "protobuf"] }
