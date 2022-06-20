@@ -1,3 +1,5 @@
+mod fib_perf;
+
 use std::fmt::Display;
 use std::time::Instant;
 
