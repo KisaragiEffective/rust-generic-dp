@@ -31,7 +31,7 @@ impl<
             State::Intermediate { dependent } => {
                 // let dependent = dbg!(dependent);
                 let len = dependent.len().into();
-                let collected_values = crate::wrap_unsafe::maybe_garbage_vec::tap_garbage(len, |temp| {
+                let collected_values = crate::wrap_unsafe::maybe_garbage_vec::tap_non_empty_uninit_vec(len, |temp| {
                     for (i, x) in dependent.iter().enumerate() {
                         let lp = self.solver.get(*x).unwrap_or_else(|| {
                             let lm = self.dp(*x);
@@ -43,7 +43,7 @@ impl<
                 });
                 let reducer = ReduceByMagma::new(self.compose_by);
                 use crate::collecting::Reducer;
-                reducer.reduce(collected_values.try_into().unwrap())
+                reducer.reduce(collected_values)
             }
             State::Base { base_result } => {
                 base_result

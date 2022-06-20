@@ -68,7 +68,7 @@ impl<
             State::Intermediate { composer, dependent } => {
                 let len = dependent.len();
                 let len = usize::from(len);
-                let kk = crate::wrap_unsafe::maybe_garbage_vec::tap_garbage(len, |temp| {
+                let kk = crate::wrap_unsafe::maybe_garbage_vec::tap_non_empty_uninit_vec(len, |temp| {
                     for (i, x) in dependent.iter().enumerate() {
                         let lp = self.solver.get(*x).unwrap_or_else(|| {
                             let lm = self.dp(*x);
@@ -78,7 +78,7 @@ impl<
                         temp[i] = MaybeUninit::new(lp);
                     }
                 });
-                composer.reduce(kk.try_into().unwrap())
+                composer.reduce(kk)
             }
             State::Base { base_result } => {
                 base_result
