@@ -36,6 +36,7 @@ impl SolverFactory {
 
 struct Function<F: Fn(Input) -> State, Input, State: StateExtractor<PA>, PA>(F, PhantomData<(Input, State, PA)>);
 impl<F: Fn(I) -> S, I, S: StateExtractor<PA>, PA> ProblemProxy<I, S, PA> for Function<F, I, S, PA> {
+    #[inline]
     fn compute(&self, input: I) -> S {
         (self.0)(input)
     }
@@ -44,6 +45,7 @@ impl<F: Fn(I) -> S, I, S: StateExtractor<PA>, PA> ProblemProxy<I, S, PA> for Fun
     fn update_cache(&self, _input: I, _get: PA) {
     }
 
+    #[inline]
     fn get(&self, _input: I) -> Option<PA> {
         None
     }
