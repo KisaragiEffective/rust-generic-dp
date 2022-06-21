@@ -6,7 +6,11 @@ use crate::dp::get_state::ProblemProxy;
 use crate::dp::state::StateExtractor;
 use crate::dp::traits::DP;
 
-pub struct TopDownDP<
+/// complex DP runner.
+/// if the answer can be expressed in SimpleDP, use it.
+/// ComplexDP can custom reduction per each sub-problems, but can penalty in performance
+/// on answer-combination phase.
+pub struct ComplexDP<
     I,
     ProbAnswer,
     SRI,
@@ -43,7 +47,7 @@ impl<
     SRI,
     PartialProblemAnswerCombiner,
     Solver
-> TopDownDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver> {
+> ComplexDP<I, ProbAnswer, SRI, PartialProblemAnswerCombiner, Solver> {
     pub(crate) fn new(solver: Solver) -> Self {
         Self {
             solver,
@@ -58,7 +62,7 @@ impl<
     R: Clone,
     PartialProblemAnswerCombiner: Clone + Reducer<R>,
     Solver: ProblemProxy<I, State<R, PartialProblemAnswerCombiner, I>, R>,
-> DP<'dp, I, R> for TopDownDP<I, R, I, PartialProblemAnswerCombiner, Solver> {
+> DP<'dp, I, R> for ComplexDP<I, R, I, PartialProblemAnswerCombiner, Solver> {
     type State = State<R, PartialProblemAnswerCombiner, I>;
 
     fn dp(&'dp self, initial_index: I) -> R {
