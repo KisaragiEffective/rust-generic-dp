@@ -4,7 +4,7 @@ use crate::dp::complex::ComplexDP;
 use crate::dp::simple;
 use crate::dp::simple_dp;
 use crate::dp::traits::DP;
-use crate::cache::CacheAll;
+use crate::cache::{CacheAll, CacheVec, CacheArray};
 use crate::collecting::Sum;
 use super::run_print_time;
 use super::run_dp;
@@ -12,15 +12,16 @@ use crate::dp::get_state::SolverFactory;
 
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn run() {
     let f = |k: i32| {
         (
             if k == 0 || k == 1 {
-                topdown::State::Base {
+                complex::State::Base {
                     base_result: 1
                 }
             }  else {
-                topdown::State::Intermediate {
+                complex::State::Intermediate {
                     composer: |a: NonEmpty<i32>| a.iter().sum(),
                     dependent: ne_vec![k - 1, k - 2],
                 }
@@ -30,27 +31,27 @@ fn run() {
 
     run_dp(
         30,
-        &TopDownDP::new(
+        &ComplexDP::new(
             SolverFactory::function(f)
         )
     );
     run_dp(
         30,
-        &TopDownDP::new(
+        &ComplexDP::new(
             SolverFactory::function_with_cache(f, CacheAll::new())
         )
     );
 
     {
-        let dp = dp::simple_dp(
+        let dp = simple_dp(
             SolverFactory::function(
                 |k: i32| {
                     if k == 0 || k == 1 {
-                        State::Base {
+                        simple::State::Base {
                             base_result: 1
                         }
                     } else {
-                        State::Intermediate {
+                        simple::State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -62,15 +63,15 @@ fn run() {
     }
 
     {
-        let dp = dp::simple_dp(
+        let dp = simple_dp(
             SolverFactory::function(
                 |k: i32| {
                     if k == 0 || k == 1 {
-                        State::Base {
+                        simple::State::Base {
                             base_result: 1
                         }
                     } else {
-                        State::Intermediate {
+                        simple::State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -82,15 +83,15 @@ fn run() {
     }
 
     {
-        let dp = dp::simple_dp(
+        let dp = simple_dp(
             SolverFactory::function_with_cache(
                 |k: i32| {
                     if k == 0 || k == 1 {
-                        State::Base {
+                        simple::State::Base {
                             base_result: 1
                         }
                     } else {
-                        State::Intermediate {
+                        simple::State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -103,20 +104,20 @@ fn run() {
     }
 
     {
-        let dp = dp::simple_dp(
+        let dp = simple_dp(
             SolverFactory::function_with_cache(
                 |k: usize| {
                     if k == 0 || k == 1 {
-                        State::Base {
+                        simple::State::Base {
                             base_result: 1
                         }
                     } else {
-                        State::Intermediate {
+                        simple::State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
                 },
-                cache::CacheVec::new()
+                CacheVec::new()
             ),
             Sum::new(),
         );
@@ -125,21 +126,21 @@ fn run() {
 
 
     {
-        let dp = dp::simple_dp(
+        let dp = simple_dp(
 
             SolverFactory::function_with_cache(
                 |k: usize| {
                     if k == 0 || k == 1 {
-                        State::Base {
+                        simple::State::Base {
                             base_result: 1
                         }
                     } else {
-                        State::Intermediate {
+                        simple::State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
                 },
-                cache::CacheArray::<_, 31>::new()
+                CacheArray::<_, 31>::new()
             ),
             Sum::new(),
         );
