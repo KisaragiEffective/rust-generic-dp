@@ -8,7 +8,11 @@ use crate::collecting::ReduceByMagma;
 use crate::dp::get_state::ProblemProxy;
 use crate::dp::state::StateExtractor;
 
-pub struct PartialTopDownDP<'dp, I, R, M: Magma<R>, Solver> {
+/// an simpler DP solver.
+/// the answer is always reduced by `compose_by`.
+/// It is preferred if you can use this strategy,
+/// as it may be simple and faster.
+pub struct SimpleDPRunner<'dp, I, R, M: Magma<R>, Solver> {
     pub(super) solver: Solver,
     pub(super) compose_by: M,
     pub(super) __phantoms: PhantomData<(&'dp (), I, R)>,
@@ -21,7 +25,7 @@ impl<
     R: Copy + Debug,
     M: Copy + Magma<R>,
     Solver: ProblemProxy<I, State<I, R>, R>
-> DP<'dp, I, R> for PartialTopDownDP<'dp, I, R, M, Solver> {
+> DP<'dp, I, R> for SimpleDPRunner<'dp, I, R, M, Solver> {
     type State = State<I, R>;
 
     fn dp(&'dp self, initial_index: I) -> R {
