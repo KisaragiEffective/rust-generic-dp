@@ -15,6 +15,15 @@ pub trait ProblemProxy<Input, State, Answer> {
     fn get(&self, input: Input) -> Option<Answer>;
 }
 
+// NOTE: this implementation is violate orphan rule.
+// impl<Input, State, Answer, PP: ProblemProxy<Input, State, Answer>> Index<Input> for PP {
+//     type Output = Option<Answer>;
+//
+//     fn index(&self, index: Input) -> &Self::Output {
+//         self.get(index)
+//     }
+// }
+
 pub struct SolverFactory;
 impl SolverFactory {
     pub fn function<Input, State: StateExtractor<PartialAnswer>, PartialAnswer>(f: impl Fn(Input) -> State) -> impl ProblemProxy<Input, State, PartialAnswer> {
@@ -53,6 +62,7 @@ impl<F: Fn(I) -> S, I, S: StateExtractor<PA>, PA> ProblemProxy<I, S, PA> for Fun
 
 struct FunctionWithCache<F: Fn(Input) -> State, CP: ArbitraryScopeCachePolicy<Input, PartialAnswer>, Input, State, PartialAnswer> {
     f: F,
+    // earn inner mutability
     cache_repo: RefCell<CP>,
     _p: PhantomData<(Input, State, PartialAnswer)>,
 }
