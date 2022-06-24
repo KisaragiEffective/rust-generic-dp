@@ -73,13 +73,13 @@ impl<T: Copy, M: Magma<T>> Reducer<T> for ReduceByMagma<T, M> {
     fn reduce(&self, reduce_source: NonEmpty<T>) -> T {
         // dont fold with the first element.
         // SAFETY: we know the iterator is also non-empty
-        reduce_source.clone().into_iter().reduce(|a, b| self.0.combine(a, b)).unwrap()
+        reduce_source.into_iter().reduce(|a, b| self.0.combine(a, b)).unwrap()
     }
 }
 
 impl<T: Clone, F: Copy + FnOnce(NonEmpty<T>) -> T> Reducer<T> for F {
     fn reduce(&self, reduce_source: NonEmpty<T>) -> T {
-        (&self(reduce_source)).clone().clone()
+        (&self(reduce_source)).clone()
     }
 }
 

@@ -1,22 +1,21 @@
-use non_empty_vec::{ne_vec, NonEmpty};
-use crate::dp::complex;
-use crate::dp::complex::ComplexDP;
-use crate::dp::simple;
-use crate::dp::simple_dp;
-use crate::dp::traits::DP;
-use crate::cache::{CacheAll, CacheVec, CacheArray};
-use crate::collecting::Sum;
-use super::run_print_time;
-use super::run_dp;
-use crate::dp::get_state::SolverFactory;
+
+
+
+
+
+
+
+
+
+
+
 
 
 #[test]
 #[allow(clippy::too_many_lines)]
 fn run() {
     let f = |k: i32| {
-        (
-            if k == 0 || k == 1 {
+        if k == 0 || k == 1 {
                 complex::State::Base {
                     base_result: 1
                 }
@@ -26,7 +25,6 @@ fn run() {
                     dependent: ne_vec![k - 1, k - 2],
                 }
             }
-        )
     };
 
     run_dp(

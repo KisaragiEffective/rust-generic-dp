@@ -18,11 +18,11 @@ fn test() {
 fn inner_test(index: usize) -> u64 {
     simple_dp(
         SolverFactory::function_with_cache(|i| {
-            if (i == 1) {
+            if i == 1 {
                 Base {
                     base_result: 1
                 }
-            } else if (i == 2) {
+            } else if i == 2 {
                 Base {
                     base_result: 2
                 }

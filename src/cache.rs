@@ -10,8 +10,8 @@ pub trait SmartPointerBackedCachePolicy<SPK: Deref<Target=K>, K, SPV: Deref<Targ
  */
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::ops::IndexMut;
-use std::rc::Rc;
+
+
 
 pub trait ArbitraryScopeCachePolicy<K, V>: for<'a> ScopedCachePolicy<'a, K, V> {
 }
@@ -48,11 +48,11 @@ impl<'a, K: Eq + Hash, V> ScopedCachePolicy<'a, K, V> for CacheAll<K, V> {
 pub struct NoCache;
 
 impl<'a, K, V> ScopedCachePolicy<'a, K, V> for NoCache {
-    fn get(&self, k: &K) -> Option<&V> {
+    fn get(&self, _k: &K) -> Option<&V> {
         None
     }
 
-    fn set(&mut self, k: K, v: V) {
+    fn set(&mut self, _k: K, _v: V) {
     }
 }
 

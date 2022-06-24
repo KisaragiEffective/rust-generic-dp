@@ -7,8 +7,8 @@ use crate::dp::state::StateExtractor;
 use crate::dp::traits::DP;
 
 /// complex DP runner.
-/// if the answer can be expressed in SimpleDP, use it.
-/// ComplexDP can custom reduction per each sub-problems, but can penalty in performance
+/// if the answer can be expressed in `SimpleDP`, use it.
+/// `ComplexDP` can custom reduction per each sub-problems, but can penalty in performance
 /// on answer-combination phase.
 pub struct ComplexDP<
     I,

@@ -9,7 +9,7 @@ use crate::dp::get_state::ProblemProxy;
 use crate::dp::simple::State;
 use crate::dp::simple::SimpleDPRunner;
 
-pub(crate) fn simple_dp<'dp, I: Copy, R: Copy, M: Copy + Magma<R>, Solver: ProblemProxy<I, State<I, R>, PartialAnswer>, PartialAnswer>(
+pub fn simple_dp<'dp, I: Copy, R: Copy, M: Copy + Magma<R>, Solver: ProblemProxy<I, State<I, R>, PartialAnswer>, PartialAnswer>(
     solver: Solver,
     compose_by: M,
 ) -> SimpleDPRunner<'dp, I, R, M, Solver> {
