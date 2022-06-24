@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use std::ops::Add;
+use std::ops::{Add, Rem};
 use non_empty_vec::NonEmpty;
 
 pub trait Magma<A> {
@@ -39,6 +39,16 @@ impl<T: Add<Output=T>> Magma<T> for Sum<T> {
     }
 }
 
+pub struct Modded<Back, T> {
+    base: Back,
+    modulo: T,
+}
+
+impl<Back: Magma<T>, T: Rem<Output=T> + Clone> Magma<T> for Modded<Back, T> {
+    fn combine(&self, lhs: T, rhs: T) -> T {
+        self.base.combine(lhs, rhs) % self.modulo.clone()
+    }
+}
 pub trait Reducer<T> {
     fn reduce(&self, reduce_source: NonEmpty<T>) -> T;
 }
