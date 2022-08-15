@@ -1,26 +1,23 @@
-
-
-
-
-
-
-
-
-
-
-
-
+use non_empty_vec::{ne_vec, NonEmpty};
+use crate::cache::{CacheAll, CacheArray, CacheVec};
+use crate::collecting::Sum;
+use crate::dp::complex::ComplexDP;
+use crate::dp::get_state::SolverFactory;
+use crate::dp::simple_dp;
+use crate::dp::traits::DP;
+use crate::test::{run_dp, run_print_time};
 
 #[test]
 #[allow(clippy::too_many_lines)]
 fn run() {
     let f = |k: i32| {
+        use crate::dp::complex::State;
         if k == 0 || k == 1 {
-                complex::State::Base {
+                State::Base {
                     base_result: 1
                 }
             }  else {
-                complex::State::Intermediate {
+                State::Intermediate {
                     composer: |a: NonEmpty<i32>| a.iter().sum(),
                     dependent: ne_vec![k - 1, k - 2],
                 }
@@ -41,15 +38,16 @@ fn run() {
     );
 
     {
+        use crate::dp::simple::State;
         let dp = simple_dp(
             SolverFactory::function(
                 |k: i32| {
                     if k == 0 || k == 1 {
-                        simple::State::Base {
+                        State::Base {
                             base_result: 1
                         }
                     } else {
-                        simple::State::Intermediate {
+                        State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -61,15 +59,16 @@ fn run() {
     }
 
     {
+        use crate::dp::simple::State;
         let dp = simple_dp(
             SolverFactory::function(
                 |k: i32| {
                     if k == 0 || k == 1 {
-                        simple::State::Base {
+                        State::Base {
                             base_result: 1
                         }
                     } else {
-                        simple::State::Intermediate {
+                        State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -81,15 +80,16 @@ fn run() {
     }
 
     {
+        use crate::dp::simple::State;
         let dp = simple_dp(
             SolverFactory::function_with_cache(
                 |k: i32| {
                     if k == 0 || k == 1 {
-                        simple::State::Base {
+                        State::Base {
                             base_result: 1
                         }
                     } else {
-                        simple::State::Intermediate {
+                        State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -102,15 +102,16 @@ fn run() {
     }
 
     {
+        use crate::dp::simple::State;
         let dp = simple_dp(
             SolverFactory::function_with_cache(
                 |k: usize| {
                     if k == 0 || k == 1 {
-                        simple::State::Base {
+                        State::Base {
                             base_result: 1
                         }
                     } else {
-                        simple::State::Intermediate {
+                        State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
@@ -124,16 +125,16 @@ fn run() {
 
 
     {
+        use crate::dp::simple::State;
         let dp = simple_dp(
-
             SolverFactory::function_with_cache(
                 |k: usize| {
                     if k == 0 || k == 1 {
-                        simple::State::Base {
+                        State::Base {
                             base_result: 1
                         }
                     } else {
-                        simple::State::Intermediate {
+                        State::Intermediate {
                             dependent: ne_vec![k - 1, k - 2]
                         }
                     }
